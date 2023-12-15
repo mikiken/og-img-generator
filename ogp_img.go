@@ -42,8 +42,8 @@ func convertSvgToPng(svgContent []byte, svg_width int, svg_height int) []byte {
 	img, err := page.MustWaitStable().Screenshot(true, &proto.PageCaptureScreenshot{
 		Format: proto.PageCaptureScreenshotFormatPng,
 		Clip: &proto.PageViewport{
-			X:      0,
-			Y:      0,
+			X:      7.5,
+			Y:      7.5,
 			Width:  float64(svg_width),
 			Height: float64(svg_height),
 			Scale:  1,
