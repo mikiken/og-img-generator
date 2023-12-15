@@ -92,19 +92,28 @@ func generateOGPImage(articleTitle string) []byte {
 }
 
 func main() {
-	md_filepath := "td4-fpga.md"
-	articleTitle := getTitleFromMetadata(md_filepath)
-
-	// OGP画像を生成
-	ogpImage := generateOGPImage(articleTitle)
-
-	// OGP画像を保存
-	pattern := regexp.MustCompile(`\.md$`)
-	file, err := os.Create(pattern.ReplaceAllString(md_filepath, ".png")) // ファイルを作成
-	if err != nil {
-		fmt.Println(err)
+	// コマンドライン引数を取得
+	args := os.Args[1:]
+	if len(args) == 0 {
+		fmt.Println("引数に.mdファイルを指定してください")
+		os.Exit(1)
 	}
-	defer file.Close() // 最後にファイルを閉じる
 
-	file.Write(ogpImage)
+	for _, md_filepath := range args {
+		// 記事タイトルを取得
+		articleTitle := getTitleFromMetadata(md_filepath)
+
+		// OGP画像を生成
+		ogpImage := generateOGPImage(articleTitle)
+
+		// OGP画像を保存
+		pattern := regexp.MustCompile(`\.md$`)
+		pngFile, err := os.Create(pattern.ReplaceAllString(md_filepath, ".png"))
+		if err != nil {
+			fmt.Println(err)
+		}
+		defer pngFile.Close() // 最後にファイルを閉じる
+
+		pngFile.Write(ogpImage)
+	}
 }
