@@ -5,15 +5,41 @@ import (
 	"fmt"
 	"html"
 	"os"
+	"regexp"
 
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/proto"
+	"github.com/yuin/goldmark"
+	meta "github.com/yuin/goldmark-meta"
+	"github.com/yuin/goldmark/parser"
 )
 
 // OGP画像のテンプレートのパス
 var ogpImgTemplate = "ogp_img_template.svg"
 var svg_width = 1200
 var svg_height = 630
+
+func getTitleFromMetadata(md_filepath string) string {
+	md_content, err := os.ReadFile(md_filepath)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	markdown := goldmark.New(
+		goldmark.WithExtensions(
+			meta.Meta,
+		),
+	)
+
+	var buf bytes.Buffer
+	context := parser.NewContext()
+	if err := markdown.Convert([]byte(string(md_content)), &buf, parser.WithContext(context)); err != nil {
+		panic(err)
+	}
+	metaData := meta.Get(context)
+	title := metaData["title"]
+	return title.(string)
+}
 
 func embedTitleToTemplate(articleTitle string) []byte {
 	// テンプレートファイルを読み込む
@@ -66,17 +92,19 @@ func generateOGPImage(articleTitle string) []byte {
 }
 
 func main() {
-	// テスト用の記事タイトル
-	articleTitle := "<h1></h1>を楽に記述するためのツールを作った話"
+	md_filepath := "td4-fpga.md"
+	articleTitle := getTitleFromMetadata(md_filepath)
 
 	// OGP画像を生成
 	ogpImage := generateOGPImage(articleTitle)
 
-	file, err := os.Create("ogp.png") // ファイルを作成
+	// OGP画像を保存
+	pattern := regexp.MustCompile(`\.md$`)
+	file, err := os.Create(pattern.ReplaceAllString(md_filepath, ".png")) // ファイルを作成
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer file.Close() // 最後にファイルを閉じる
 
-	file.Write(ogpImage) // 文字列を書き込む
+	file.Write(ogpImage)
 }
