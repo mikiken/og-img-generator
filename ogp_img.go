@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"html"
 	"os"
+
+	"github.com/go-rod/rod"
+	"github.com/go-rod/rod/lib/proto"
 )
 
 // OGP画像のテンプレートのパス
 var ogpImgTemplate = "ogp_img_template.svg"
 
-func GenerateOGPImage(articleTitle string) string {
+func generateOGPImage(articleTitle string) []byte {
 	// テンプレートファイルを読み込む
 	svgContent, err := os.ReadFile(ogpImgTemplate)
 	if err != nil {
@@ -21,7 +24,38 @@ func GenerateOGPImage(articleTitle string) string {
 	// 記事タイトルをテンプレートに埋め込む
 	svgContent = bytes.Replace(svgContent, []byte("{{.article_title}}"), []byte(escapedTitle), -1)
 
-	return string(svgContent)
+	return convertSvgToPng(svgContent, 1200, 630)
+}
+
+func convertSvgToPng(svgContent []byte, svg_width int, svg_height int) []byte {
+	// ヘッドレスブラウザを起動
+	page, err := rod.New().MustConnect().Page(proto.TargetCreateTarget{})
+	if err != nil {
+		fmt.Println(err)
+	}
+	// svgファイルを開く
+	if err = page.SetDocumentContent(string(svgContent)); err != nil {
+		fmt.Println(err)
+	}
+
+	// スクリーンショットを撮る
+	img, err := page.MustWaitStable().Screenshot(true, &proto.PageCaptureScreenshot{
+		Format: proto.PageCaptureScreenshotFormatPng,
+		Clip: &proto.PageViewport{
+			X:      0,
+			Y:      0,
+			Width:  float64(svg_width),
+			Height: float64(svg_height),
+			Scale:  1,
+		},
+		FromSurface: true,
+	})
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return img
 }
 
 func main() {
@@ -29,14 +63,14 @@ func main() {
 	articleTitle := "<h1></h1>を楽に記述するためのツールを作った話"
 
 	// OGP画像を生成
-	ogpImage := GenerateOGPImage(articleTitle)
+	ogpImage := generateOGPImage(articleTitle)
 
-	file, err := os.Create("ogp.svg") // ファイルを作成
+	file, err := os.Create("ogp.png") // ファイルを作成
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	defer file.Close() // 最後にファイルを閉じる
 
-	file.WriteString(ogpImage) // 文字列を書き込む
+	file.Write(ogpImage) // 文字列を書き込む
 }
