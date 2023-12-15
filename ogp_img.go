@@ -12,8 +12,10 @@ import (
 
 // OGP画像のテンプレートのパス
 var ogpImgTemplate = "ogp_img_template.svg"
+var svg_width = 1200
+var svg_height = 630
 
-func generateOGPImage(articleTitle string) []byte {
+func embedTitleToTemplate(articleTitle string) []byte {
 	// テンプレートファイルを読み込む
 	svgContent, err := os.ReadFile(ogpImgTemplate)
 	if err != nil {
@@ -24,7 +26,7 @@ func generateOGPImage(articleTitle string) []byte {
 	// 記事タイトルをテンプレートに埋め込む
 	svgContent = bytes.Replace(svgContent, []byte("{{.article_title}}"), []byte(escapedTitle), -1)
 
-	return convertSvgToPng(svgContent, 1200, 630)
+	return svgContent
 }
 
 func convertSvgToPng(svgContent []byte, svg_width int, svg_height int) []byte {
@@ -58,6 +60,11 @@ func convertSvgToPng(svgContent []byte, svg_width int, svg_height int) []byte {
 	return img
 }
 
+func generateOGPImage(articleTitle string) []byte {
+	ogpImage := convertSvgToPng(embedTitleToTemplate(articleTitle), svg_width, svg_height)
+	return ogpImage
+}
+
 func main() {
 	// テスト用の記事タイトル
 	articleTitle := "<h1></h1>を楽に記述するためのツールを作った話"
@@ -69,7 +76,6 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-
 	defer file.Close() // 最後にファイルを閉じる
 
 	file.Write(ogpImage) // 文字列を書き込む
