@@ -1,4 +1,4 @@
-module ogp_image_generator
+module github.com/mikiken/ogp-img-generator
 
 go 1.20
 
