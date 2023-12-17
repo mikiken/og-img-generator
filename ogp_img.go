@@ -19,6 +19,24 @@ var ogpImgTemplate = "ogp_img_template.svg"
 var svg_width = 1200
 var svg_height = 630
 
+func shouldGenerateOGPImage(md_filepath string) bool {
+	md_content, err := os.ReadFile(md_filepath)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	markdown := goldmark.New(goldmark.WithExtensions(meta.Meta))
+
+	var buf bytes.Buffer
+	context := parser.NewContext()
+	if err := markdown.Convert([]byte(string(md_content)), &buf, parser.WithContext(context)); err != nil {
+		panic(err)
+	}
+	metaData := meta.Get(context)
+	shouldGenImg := metaData["autoGenOgpImg"]
+	return shouldGenImg.(bool)
+}
+
 func getTitleFromMetadata(md_filepath string) string {
 	md_content, err := os.ReadFile(md_filepath)
 	if err != nil {
