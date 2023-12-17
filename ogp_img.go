@@ -15,9 +15,6 @@ import (
 	"github.com/yuin/goldmark/parser"
 )
 
-// path to template svg
-var ogpImgTemplate = "ogp_img_template.svg"
-
 func shouldGenerateOGPImage(md_filepath string) bool {
 	md_content, err := os.ReadFile(md_filepath)
 	if err != nil {
@@ -54,7 +51,7 @@ func getTitleFromMetadata(md_filepath string) string {
 	return title.(string)
 }
 
-func embedTitleToTemplate(articleTitle string) []byte {
+func embedTitleToTemplate(ogpImgTemplate string, articleTitle string) []byte {
 	// read svg template
 	svgContent, err := os.ReadFile(ogpImgTemplate)
 	if err != nil {
@@ -122,16 +119,23 @@ func convertToPng(svgContent []byte) []byte {
 	return img
 }
 
-func generatePNG(articleTitle string) []byte {
-	return convertToPng(embedTitleToTemplate(articleTitle))
+func generatePNG(ogpImgTemplate string, articleTitle string) []byte {
+	return convertToPng(embedTitleToTemplate(ogpImgTemplate, articleTitle))
 }
 
 func main() {
 	// get command line arguments
-	args := os.Args[1:]
+	if len(os.Args) == 1 {
+		fmt.Println("No OGP image template is specified.")
+		fmt.Println("Usage: ogp_img [ogp image template path] [markdown file path]")
+		os.Exit(1)
+	}
+	ogpImgTemplate := os.Args[1]
+	args := os.Args[2:]
 	if len(args) == 0 {
 		fmt.Println("No markdown file path is specified.")
-		fmt.Println("Usage: ogp_img [markdown file path]")
+		fmt.Println("Usage: ogp_img [ogp image template path] [markdown file path]")
+
 		os.Exit(1)
 	}
 
@@ -144,7 +148,7 @@ func main() {
 		// get article title from metadata
 		articleTitle := getTitleFromMetadata(md_filepath)
 		// generate OGP image
-		ogpImage := generatePNG(articleTitle)
+		ogpImage := generatePNG(ogpImgTemplate, articleTitle)
 
 		// save OGP image
 		pngFile, err := os.Create(filepath.Dir(md_filepath) + "/ogp.png")
