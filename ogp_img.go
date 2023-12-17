@@ -119,17 +119,18 @@ func main() {
 			continue
 		}
 
+		// get article title from metadata
 		articleTitle := getTitleFromMetadata(md_filepath)
-
+		// generate OGP image
 		ogpImage := generatePNG(articleTitle)
 
+		// save OGP image
 		pattern := regexp.MustCompile(`\.md$`)
 		pngFile, err := os.Create(pattern.ReplaceAllString(md_filepath, ".png"))
 		if err != nil {
 			fmt.Println(err)
 		}
 		defer pngFile.Close()
-
 		pngFile.Write(ogpImage)
 	}
 }
