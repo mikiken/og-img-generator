@@ -14,7 +14,7 @@ import (
 	"github.com/yuin/goldmark/parser"
 )
 
-// OGP画像のテンプレートのパス
+// path to template svg
 var ogpImgTemplate = "ogp_img_template.svg"
 var svg_width = 1200
 var svg_height = 630
@@ -38,31 +38,31 @@ func getTitleFromMetadata(md_filepath string) string {
 }
 
 func embedTitleToTemplate(articleTitle string) []byte {
-	// テンプレートファイルを読み込む
+	// read svg template
 	svgContent, err := os.ReadFile(ogpImgTemplate)
 	if err != nil {
 		fmt.Println(err)
 	}
-	// 記事タイトルをエスケープする
+	// escape article title
 	escapedTitle := html.EscapeString(articleTitle)
-	// 記事タイトルをテンプレートに埋め込む
+	// embed article title to svg
 	svgContent = bytes.Replace(svgContent, []byte("{{.article_title}}"), []byte(escapedTitle), -1)
 
 	return svgContent
 }
 
 func convertToPng(svgContent []byte, width int, height int) []byte {
-	// ヘッドレスブラウザを起動
+	// launch headless browser
 	page, err := rod.New().MustConnect().Page(proto.TargetCreateTarget{})
 	if err != nil {
 		fmt.Println(err)
 	}
-	// svgファイルを開く
+	// set svg content to page
 	if err = page.SetDocumentContent(string(svgContent)); err != nil {
 		fmt.Println(err)
 	}
 
-	// スクリーンショットを撮る
+	// take screenshot
 	img, err := page.MustWaitStable().Screenshot(true, &proto.PageCaptureScreenshot{
 		Format: proto.PageCaptureScreenshotFormatPng,
 		Clip: &proto.PageViewport{
@@ -88,7 +88,7 @@ func generatePNG(articleTitle string) []byte {
 }
 
 func main() {
-	// コマンドライン引数を取得
+	// get command line arguments
 	args := os.Args[1:]
 	if len(args) == 0 {
 		fmt.Println("引数に.mdファイルを指定してください")
@@ -96,19 +96,17 @@ func main() {
 	}
 
 	for _, md_filepath := range args {
-		// 記事タイトルを取得
+
 		articleTitle := getTitleFromMetadata(md_filepath)
 
-		// OGP画像を生成
 		ogpImage := generatePNG(articleTitle)
 
-		// OGP画像を保存
 		pattern := regexp.MustCompile(`\.md$`)
 		pngFile, err := os.Create(pattern.ReplaceAllString(md_filepath, ".png"))
 		if err != nil {
 			fmt.Println(err)
 		}
-		defer pngFile.Close() // 最後にファイルを閉じる
+		defer pngFile.Close()
 
 		pngFile.Write(ogpImage)
 	}
