@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"html"
 	"os"
-	"path/filepath"
+	"regexp"
 
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/proto"
@@ -151,7 +151,9 @@ func main() {
 		ogpImage := generatePNG(ogpImgTemplate, articleTitle)
 
 		// save OGP image
-		pngFile, err := os.Create(filepath.Dir(md_filepath) + "/ogp.png")
+		pattern := regexp.MustCompile(`\.md$`)
+		fmt.Println(md_filepath)
+		pngFile, err := os.Create("static/images/ogp/" + pattern.ReplaceAllString(md_filepath, ".png"))
 		if err != nil {
 			fmt.Println(err)
 		}
