@@ -114,6 +114,10 @@ func main() {
 	}
 
 	for _, md_filepath := range args {
+		// check if OGP image should be generated
+		if !shouldGenerateOGPImage(md_filepath) {
+			continue
+		}
 
 		articleTitle := getTitleFromMetadata(md_filepath)
 
