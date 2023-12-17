@@ -25,11 +25,7 @@ func getTitleFromMetadata(md_filepath string) string {
 		fmt.Println(err)
 	}
 
-	markdown := goldmark.New(
-		goldmark.WithExtensions(
-			meta.Meta,
-		),
-	)
+	markdown := goldmark.New(goldmark.WithExtensions(meta.Meta))
 
 	var buf bytes.Buffer
 	context := parser.NewContext()
@@ -55,7 +51,7 @@ func embedTitleToTemplate(articleTitle string) []byte {
 	return svgContent
 }
 
-func convertSvgToPng(svgContent []byte, svg_width int, svg_height int) []byte {
+func convertToPng(svgContent []byte, width int, height int) []byte {
 	// ヘッドレスブラウザを起動
 	page, err := rod.New().MustConnect().Page(proto.TargetCreateTarget{})
 	if err != nil {
@@ -72,8 +68,8 @@ func convertSvgToPng(svgContent []byte, svg_width int, svg_height int) []byte {
 		Clip: &proto.PageViewport{
 			X:      7.5,
 			Y:      7.5,
-			Width:  float64(svg_width),
-			Height: float64(svg_height),
+			Width:  float64(width),
+			Height: float64(height),
 			Scale:  1,
 		},
 		FromSurface: true,
@@ -86,8 +82,8 @@ func convertSvgToPng(svgContent []byte, svg_width int, svg_height int) []byte {
 	return img
 }
 
-func generateOGPImage(articleTitle string) []byte {
-	ogpImage := convertSvgToPng(embedTitleToTemplate(articleTitle), svg_width, svg_height)
+func generatePNG(articleTitle string) []byte {
+	ogpImage := convertToPng(embedTitleToTemplate(articleTitle), svg_width, svg_height)
 	return ogpImage
 }
 
@@ -104,7 +100,7 @@ func main() {
 		articleTitle := getTitleFromMetadata(md_filepath)
 
 		// OGP画像を生成
-		ogpImage := generateOGPImage(articleTitle)
+		ogpImage := generatePNG(articleTitle)
 
 		// OGP画像を保存
 		pattern := regexp.MustCompile(`\.md$`)
