@@ -109,7 +109,8 @@ func main() {
 	// get command line arguments
 	args := os.Args[1:]
 	if len(args) == 0 {
-		fmt.Println("引数に.mdファイルを指定してください")
+		fmt.Println("No markdown file path is specified.")
+		fmt.Println("Usage: ogp_img [markdown file path]")
 		os.Exit(1)
 	}
 
