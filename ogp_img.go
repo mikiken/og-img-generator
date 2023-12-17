@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/xml"
 	"fmt"
 	"html"
 	"os"
@@ -16,8 +17,6 @@ import (
 
 // path to template svg
 var ogpImgTemplate = "ogp_img_template.svg"
-var svg_width = 1200
-var svg_height = 630
 
 func shouldGenerateOGPImage(md_filepath string) bool {
 	md_content, err := os.ReadFile(md_filepath)
@@ -69,7 +68,30 @@ func embedTitleToTemplate(articleTitle string) []byte {
 	return svgContent
 }
 
-func convertToPng(svgContent []byte, width int, height int) []byte {
+func getSvgSize(svgBytes []byte) (width int, height int, err error) {
+	type SVG struct {
+		XMLName xml.Name `xml:"svg"`
+		Width   int      `xml:"width,attr"`
+		Height  int      `xml:"height,attr"`
+	}
+
+	var svg SVG
+	// decode the XML content from the byte slice
+	err = xml.Unmarshal(svgBytes, &svg)
+	if err != nil {
+		return -1, -1, err
+	}
+
+	// Return width and height
+	return svg.Width, svg.Height, nil
+}
+
+func convertToPng(svgContent []byte) []byte {
+	// get svg size
+	width, height, err := getSvgSize(svgContent)
+	if err != nil {
+		fmt.Println(err)
+	}
 	// launch headless browser
 	page, err := rod.New().MustConnect().Page(proto.TargetCreateTarget{})
 	if err != nil {
@@ -101,8 +123,7 @@ func convertToPng(svgContent []byte, width int, height int) []byte {
 }
 
 func generatePNG(articleTitle string) []byte {
-	ogpImage := convertToPng(embedTitleToTemplate(articleTitle), svg_width, svg_height)
-	return ogpImage
+	return convertToPng(embedTitleToTemplate(articleTitle))
 }
 
 func main() {
